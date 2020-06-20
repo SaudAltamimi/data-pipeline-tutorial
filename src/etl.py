@@ -29,9 +29,16 @@ def validate_data(kdf:'DataFrame'):
     return kdf
     
 
-def load_data(kdf:'DataFrame', where:str):
+def load_data(kdf:'DataFrame', partition_by:list, mode:str , where:str):
     ''' TODO '''
-    kdf.to_csv(path_or_buf = where)
+    
+    (kdf
+     .to_spark()
+     .write
+     .partitionBy(*partition_by)
+     .mode(mode)
+     .csv(where)
+    )
 
 
 
@@ -51,7 +58,11 @@ def main():
     .pipe(cleanse_categories)
     .pipe(merge_data, other_data = kdf_messages, on = 'id')
     .pipe(validate_data)
-    .pipe(load_data, where = '../data/prepared_data/')
+    .pipe(load_data, 
+          partition_by = ['genre'], 
+          mode = 'overwrite' ,
+          where = '../data/cleansed_data'
+         )
     )
 
 
