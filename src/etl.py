@@ -15,11 +15,6 @@ def cleanse_categories(kdf:'DataFrame'):
     return kdf
 
 
-def drop_duplicates(kdf:'DataFrame'):
-    ''' Drop duplicate records '''
-    return kdf.drop_duplicates()
-
-
 def cleanse_categories(kdf:'DataFrame'):
     ''' TODO '''
     return kdf
@@ -55,7 +50,6 @@ def main():
     (kdf_categories
     .pipe(cleanse_categories)
     .pipe(merge_data, other_data = kdf_messages, on = 'id')
-    .pipe(drop_duplicates)
     .pipe(validate_data)
     .pipe(load_data, where = '../data/prepared_data/')
     )
