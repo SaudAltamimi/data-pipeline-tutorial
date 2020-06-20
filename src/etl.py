@@ -4,8 +4,8 @@ import databricks.koalas as ks
 
 def extract_data():
 
-    kdf_categories = ks.read_csv('../data/disaster_categories.csv')
-    kdf_messages = ks.read_csv('../data/disaster_messages.csv')
+    kdf_categories = ks.read_csv('../data/raw_data/disaster_categories.csv')
+    kdf_messages = ks.read_csv('../data/raw_data/disaster_messages.csv')
 
     return kdf_messages,kdf_categories
 
