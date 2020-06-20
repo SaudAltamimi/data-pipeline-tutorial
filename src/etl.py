@@ -33,11 +33,8 @@ def load_data(kdf:'DataFrame', partition_by:list, mode:str , where:str):
     ''' TODO '''
     
     (kdf
-     .to_spark()
-     .write
-     .partitionBy(*partition_by)
-     .mode(mode)
-     .csv(where)
+     .to_pandas()
+     .to_csv(where)
     )
 
 
@@ -61,7 +58,7 @@ def main():
     .pipe(load_data, 
           partition_by = ['genre'], 
           mode = 'overwrite' ,
-          where = '../data/cleansed_data'
+          where = '../data/cleansed_data.csv'
          )
     )
 
