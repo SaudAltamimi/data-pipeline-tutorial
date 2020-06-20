@@ -34,7 +34,7 @@ def load_data(kdf:'DataFrame', partition_by:list, mode:str , where:str):
     
     (kdf
      .to_pandas()
-     .to_csv(where)
+     .to_csv(where, index=False)
     )
 
 
