@@ -15,11 +15,6 @@ def cleanse_categories(kdf:'DataFrame'):
     return kdf
 
 
-def cleanse_categories(kdf:'DataFrame'):
-    ''' TODO '''
-    return kdf
-
-
 def merge_data(kdf:'DataFrame', other_data:'DataFrame', on:str):
     return kdf.merge(right = other_data, on = on)
 
