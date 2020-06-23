@@ -3,7 +3,9 @@ import databricks.koalas as ks
 
 
 def extract_data():
-
+    '''
+    Read the raw data 
+    '''
     kdf_categories = ks.read_csv('../data/raw_data/disaster_categories.csv')
     kdf_messages = ks.read_csv('../data/raw_data/disaster_messages.csv')
 
@@ -24,13 +26,9 @@ def validate_data(kdf:'DataFrame'):
     return kdf
     
 
-def load_data(kdf:'DataFrame', partition_by:list, mode:str , where:str):
-    ''' TODO '''
-    
-    (kdf
-     .to_pandas()
-     .to_csv(where, index=False)
-    )
+def load_data(kdf:'DataFrame', where:str):
+    ''' save the prepared data '''
+    kdf.to_csv(where)
 
 
 
@@ -50,9 +48,7 @@ def main():
     .pipe(cleanse_categories)
     .pipe(merge_data, other_data = kdf_messages, on = 'id')
     .pipe(validate_data)
-    .pipe(load_data, 
-          partition_by = ['genre'], 
-          mode = 'overwrite' ,
+    .pipe(load_data,
           where = '../data/cleansed_data.csv'
          )
     )
