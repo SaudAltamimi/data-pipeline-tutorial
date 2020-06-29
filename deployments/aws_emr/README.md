@@ -9,6 +9,7 @@
     * Default output format : `json`
     
 3. **copy all the necessary files to an s3 bucket**
+    - emr_b
 
     * Ex: `aws s3 cp <filename> s3://<bucket_name>`
     
