@@ -1,4 +1,4 @@
-##How to deploy on AWS?
+## How to deploy on AWS?
 
 1. Install `awscli`
 
