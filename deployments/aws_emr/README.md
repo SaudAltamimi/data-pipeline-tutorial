@@ -22,12 +22,12 @@
 aws emr create-cluster --name "Spark cluster with step" \
     --release-label emr-5.30.1 \
     --applications Name=Spark \
-    --log-uri s3://dendsparktutorial/logs/ \
+    --log-uri s3://<bucket_name>/logs/ \
     --ec2-attributes KeyName=emr-key \
     --instance-type m5.xlarge \
     --instance-count 3 \
-    --bootstrap-actions Path=s3://dendsparktutorial/emr_bootstrap.sh \
-    --steps Type=Spark,Name="Spark program",ActionOnFailure=CONTINUE,Args=[--deploy-mode,cluster,--master,yarn,s3://dendsparktutorial/src/etl.py] \
+    --bootstrap-actions Path=s3://<bucket_name>/emr_bootstrap.sh \
+    --steps Type=Spark,Name="Spark program",ActionOnFailure=CONTINUE,Args=[--deploy-mode,cluster,--master,yarn,s3://<bucket_name>/src/etl.py] \
     --use-default-roles \
     --auto-terminate
 ```
