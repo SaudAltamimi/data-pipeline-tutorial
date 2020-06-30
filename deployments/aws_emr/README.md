@@ -1,8 +1,8 @@
 ## How to deploy on AWS?
 
-1. Install `awscli`
+1. **Install** `awscli`
 
-2. run `aws configure` 
+2. **run** `aws configure` 
     * AWS Access Key ID : 
     * AWS Secret Access Key : 
     * Default region name: `us-west-2`
