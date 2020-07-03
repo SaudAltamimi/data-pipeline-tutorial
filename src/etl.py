@@ -24,12 +24,30 @@ def _split_and_expand(categories_text:str, by:str = ';'):
     return cat_booleans
 
 
+def create_spark_session():
+    """
+    Create spark session.
+
+    Returns:
+        spark (SparkSession) - spark session connected to AWS EMR cluster
+    """
+    spark = (SparkSession
+            .builder
+            .appName('data_pipeline_example')
+            .config("spark.jars.packages",
+                    "org.apache.hadoop:hadoop-aws:2.7.0") 
+            .getOrCreate()
+        )
+
+    return spark
+
+
 def extract_data():
     '''
     Read the raw data 
     '''
-    kdf_categories = ks.read_csv('../data/raw_data/disaster_categories.csv')
-    kdf_messages = ks.read_csv('../data/raw_data/disaster_messages.csv')
+    kdf_categories = ks.read_csv('s3://dendsparktut/raw_data/disaster_categories.csv')
+    kdf_messages = ks.read_csv('s3://dendsparktut/raw_data/disaster_messages.csv')
 
     return kdf_messages,kdf_categories
 
@@ -90,11 +108,7 @@ def load_data(kdf:'DataFrame', where:str, partition_by:list):
 def main():
 
     # Create a sspark session
-    spark_session = (SparkSession
-                    .builder
-                    .appName('data_pipeline_example')
-                    .getOrCreate()
-                    )
+    spark_session = create_spark_session()
 
     # Extarct the raw data
     kdf_messages, kdf_categories = extract_data()
@@ -108,7 +122,7 @@ def main():
           )
     .pipe(validate_data)
     .pipe(load_data,
-          where = '../data/cleansed_data.csv',
+          where = 's3://dendsparktut/cleansed_data',
           partition_by = ['genre']
          )
     )
