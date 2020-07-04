@@ -19,9 +19,9 @@ def _split_and_expand(categories_text:str, by:str = ';'):
     
     
     # expand the splitted list to multiple of columns
-    cat_booleans = pd.Series(cat_booleans).astype(int)
+    cat_booleans_series = pd.Series(cat_booleans).astype(int)
     
-    return cat_booleans
+    return cat_booleans_series
 
 
 def create_spark_session():
@@ -35,7 +35,7 @@ def create_spark_session():
             .builder
             .appName('data_pipeline_example')
             .config("spark.jars.packages",
-                    "org.apache.hadoop:hadoop-aws:2.7.0") 
+                    "org.apache.hadoop:hadoop-aws:2.8.5") 
             .getOrCreate()
         )
 
@@ -60,10 +60,11 @@ def cleanse_categories(kdf:'DataFrame'):
     '''
     # extract columns names --> categories names
     cols = (kdf
-            .categories.str.split(';')
-            .apply(lambda cats_list: [cat.split('-')[0] 
-                                      for cat in cats_list]
-                                      )
+            .head(1)
+            .apply(lambda row: [cat.split('-')[0] 
+                                for cat in row.categories.split(';')],
+                   axis = 1
+                   )
             ).loc[0]
     
     
@@ -94,12 +95,12 @@ def validate_data(kdf:'DataFrame'):
     return kdf
     
 
-def load_data(kdf:'DataFrame', where:str, partition_by:list):
+def load_data(kdf:'DataFrame', where:str, partition_cols:list):
     ''' save the prepared data '''
     (kdf
     .to_spark()
     .write
-    .partitionBy(*partition_by)
+    .partitionBy(*partition_cols)
     .parquet(where)
     )
 
@@ -122,8 +123,8 @@ def main():
           )
     .pipe(validate_data)
     .pipe(load_data,
-          where = 's3://dendsparktut/cleansed_data',
-          partition_by = ['genre']
+          where = 's3://dendsparktut/cleansed_data/test1',
+          partition_cols = ['genre']
          )
     )
 
