@@ -1,4 +1,8 @@
 
+
+
+import logging
+
 import airflow
 from airflow.contrib.operators.emr_add_steps_operator import EmrAddStepsOperator
 from airflow.contrib.operators.emr_create_job_flow_operator import EmrCreateJobFlowOperator
@@ -19,7 +23,7 @@ args = {
 }
 
 dag = airflow.DAG(
-    'batch_job_example_koalas_test',
+    'batch_job_example_koalas_test2',
     schedule_interval='@once',
     default_args=args,
     max_active_runs=1
@@ -83,7 +87,7 @@ default_emr_settings = {"Name": "test koalas",
                         }
 
 
-run_steps = [
+run_step1 = [
     {
         'Name': 'setup - copy files',
         'ActionOnFailure': 'CONTINUE',
@@ -91,8 +95,10 @@ run_steps = [
             'Jar': 'command-runner.jar',
             'Args': ['aws', 's3', 'cp', 's3://dendsparktut/src/etl.py' , '/home/hadoop/']
         }
-    },
-    {
+    }]
+    
+    
+run_step2 = [{
         'Name': 'run koalas',
         'ActionOnFailure': 'CONTINUE',
         'HadoopJarStep': {
@@ -125,22 +131,41 @@ create_job_flow_task = EmrCreateJobFlowOperator(
 )
 
 
-add_step_task = EmrAddStepsOperator(
-    task_id='add_step',
+add_step_task1 = EmrAddStepsOperator(
+    task_id='add_step1',
     # XComs let tasks exchange messages
     job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
     aws_conn_id='aws_default',
-    steps=run_steps,
+    steps=run_step1,
     dag=dag
 )
 
-watch_prev_step_task = EmrStepSensor(
-    task_id='watch_prev_step',
+watch_prev_step_task1 = EmrStepSensor(
+    task_id='watch_prev_step1',
     job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
-    step_id="{{ task_instance.xcom_pull('add_step', key='return_value')[0] }}",
+    step_id="{{ task_instance.xcom_pull('add_step1', key='return_value')[0] }}",
     aws_conn_id='aws_default',
     dag=dag
 )
+
+
+add_step_task2 = EmrAddStepsOperator(
+    task_id='add_step2',
+    # XComs let tasks exchange messages
+    job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
+    aws_conn_id='aws_default',
+    steps=run_step2,
+    dag=dag
+)
+
+watch_prev_step_task2 = EmrStepSensor(
+    task_id='watch_prev_step2',
+    job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
+    step_id="{{ task_instance.xcom_pull('add_step2', key='return_value')[0] }}",
+    aws_conn_id='aws_default',
+    dag=dag
+)
+
 
 terminate_job_flow_task = EmrTerminateJobFlowOperator(
     task_id='terminate_job_flow',
@@ -150,4 +175,5 @@ terminate_job_flow_task = EmrTerminateJobFlowOperator(
     dag=dag
 )
 
-check_data_exists_task >> create_job_flow_task  >> add_step_task >> watch_prev_step_task >> terminate_job_flow_task
+check_data_exists_task >> create_job_flow_task  >> add_step_task1 >> watch_prev_step_task1 >> add_step_task2 >> watch_prev_step_task2  >> terminate_job_flow_task
+
