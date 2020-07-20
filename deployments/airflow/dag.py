@@ -23,7 +23,7 @@ args = {
 }
 
 dag = airflow.DAG(
-    'batch_job_example_koalas_test2',
+    'batch_job_example_koalas1',
     schedule_interval='@once',
     default_args=args,
     max_active_runs=1
@@ -31,7 +31,7 @@ dag = airflow.DAG(
 
 # https://docs.aws.amazon.com/emr/latest/APIReference/API_RunJobFlow.html
 default_emr_settings = {"Name": "test koalas",
-                        "LogUri": "s3://dendsparktut/logs/",
+                        "LogUri": "s3://dendsparktut/logs/", #TODO
                         "ReleaseLabel": "emr-5.30.1",
                         "Instances": {
                             "InstanceGroups": [
@@ -50,10 +50,10 @@ default_emr_settings = {"Name": "test koalas",
                                     "InstanceCount": 1
                                 }
                             ],
-                            "Ec2KeyName": "emr-key",
+                            "Ec2KeyName": "emr-key", #TODO
                             "KeepJobFlowAliveWhenNoSteps": True,
-                            'EmrManagedMasterSecurityGroup': 'sg-0c56881282db88127',
-                            'EmrManagedSlaveSecurityGroup': 'sg-0eb734a9fee345864',
+                            'EmrManagedMasterSecurityGroup': 'sg-0c56881282db88127', #TODO
+                            'EmrManagedSlaveSecurityGroup': 'sg-0eb734a9fee345864', #TODO
                             'Placement': {
                                 'AvailabilityZone': 'us-west-2a',
                             },
@@ -63,7 +63,7 @@ default_emr_settings = {"Name": "test koalas",
                             {
                                 'Name': 'install koalas',
                                 'ScriptBootstrapAction': {
-                                    'Path': 's3://dendsparktut/emr_bootstrap.sh'
+                                    'Path': 's3://dendsparktut/emr_bootstrap.sh' #TODO
                                 }
                             }
                         ],
@@ -87,23 +87,23 @@ default_emr_settings = {"Name": "test koalas",
                         }
 
 
-run_step1 = [
+copy_script_step = [
     {
         'Name': 'setup - copy files',
         'ActionOnFailure': 'CONTINUE',
         'HadoopJarStep': {
             'Jar': 'command-runner.jar',
-            'Args': ['aws', 's3', 'cp', 's3://dendsparktut/src/etl.py' , '/home/hadoop/']
+            'Args': ['aws', 's3', 'cp', 's3://dendsparktut/src/etl.py' , '/home/hadoop/'] #TODO
         }
     }]
     
     
-run_step2 = [{
+run_job_step = [{
         'Name': 'run koalas',
         'ActionOnFailure': 'CONTINUE',
         'HadoopJarStep': {
             'Jar': 'command-runner.jar',
-            'Args': ['spark-submit', '/home/hadoop/etl.py']
+            'Args': ['spark-submit', '/home/hadoop/etl.py'] #TODO
         }
     }
     ]
@@ -112,8 +112,8 @@ run_step2 = [{
 def check_data_exists():
     logging.info('checking that data exists in s3')
     source_s3 = S3Hook(aws_conn_id='aws_default')
-    keys = source_s3.list_keys(bucket_name='dendsparktut',
-                               prefix='raw_data/')
+    keys = source_s3.list_keys(bucket_name='dendsparktut',#TODO
+                               prefix='raw_data/') #TODO
     logging.info('keys {}'.format(keys))
 
 
@@ -131,37 +131,37 @@ create_job_flow_task = EmrCreateJobFlowOperator(
 )
 
 
-add_step_task1 = EmrAddStepsOperator(
-    task_id='add_step1',
+copy_python_script = EmrAddStepsOperator(
+    task_id='copy_script',
     # XComs let tasks exchange messages
     job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
     aws_conn_id='aws_default',
-    steps=run_step1,
+    steps=copy_script_step,
     dag=dag
 )
 
 watch_prev_step_task1 = EmrStepSensor(
     task_id='watch_prev_step1',
     job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
-    step_id="{{ task_instance.xcom_pull('add_step1', key='return_value')[0] }}",
+    step_id="{{ task_instance.xcom_pull('copya_script', key='return_value')[0] }}",
     aws_conn_id='aws_default',
     dag=dag
 )
 
 
-add_step_task2 = EmrAddStepsOperator(
-    task_id='add_step2',
+run_spark_job = EmrAddStepsOperator(
+    task_id='run_spark_job',
     # XComs let tasks exchange messages
     job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
     aws_conn_id='aws_default',
-    steps=run_step2,
+    steps=run_job_step,
     dag=dag
 )
 
 watch_prev_step_task2 = EmrStepSensor(
     task_id='watch_prev_step2',
     job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
-    step_id="{{ task_instance.xcom_pull('add_step2', key='return_value')[0] }}",
+    step_id="{{ task_instance.xcom_pull('run_spark_job', key='return_value')[0] }}",
     aws_conn_id='aws_default',
     dag=dag
 )
@@ -175,5 +175,6 @@ terminate_job_flow_task = EmrTerminateJobFlowOperator(
     dag=dag
 )
 
-check_data_exists_task >> create_job_flow_task  >> add_step_task1 >> watch_prev_step_task1 >> add_step_task2 >> watch_prev_step_task2  >> terminate_job_flow_task
+check_data_exists_task >> create_job_flow_task  >> copy_python_script >> watch_prev_step_task1 >> run_spark_job >> watch_prev_step_task2  >> terminate_job_flow_task
+
 
