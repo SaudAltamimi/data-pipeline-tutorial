@@ -143,7 +143,7 @@ copy_python_script = EmrAddStepsOperator(
 watch_prev_step_task1 = EmrStepSensor(
     task_id='watch_prev_step1',
     job_flow_id="{{ task_instance.xcom_pull('create_job_flow', key='return_value') }}",
-    step_id="{{ task_instance.xcom_pull('copya_script', key='return_value')[0] }}",
+    step_id="{{ task_instance.xcom_pull('copy_script', key='return_value')[0] }}",
     aws_conn_id='aws_default',
     dag=dag
 )
