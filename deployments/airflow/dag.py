@@ -52,8 +52,8 @@ default_emr_settings = {"Name": "test koalas",
                             ],
                             "Ec2KeyName": "emr-key", #TODO
                             "KeepJobFlowAliveWhenNoSteps": True,
-                            'EmrManagedMasterSecurityGroup': 'sg-0c56881282db88127', #TODO
-                            'EmrManagedSlaveSecurityGroup': 'sg-0eb734a9fee345864', #TODO
+#                             'EmrManagedMasterSecurityGroup': 'sg-0c56881282db88127', 
+#                             'EmrManagedSlaveSecurityGroup': 'sg-0eb734a9fee345864', 
                             'Placement': {
                                 'AvailabilityZone': 'us-west-2a',
                             },
